@@ -71,52 +71,6 @@ The system integrates with the Wild Trails Sawyer API which provides:
    - Add submission tracking capabilities
    - Support multiple images per submission
 
-## Acceptance Criteria
-
-### Feature: Tree Report Submission via SMS
-
-```gherkin
-Scenario: User submits a tree report with image
-Given a user has taken a photo of a downed tree
-When they send the photo via SMS to the service number
-Then the system should store the submission
-And send a "Thank you for your submission" SMS to the user
-And queue the image for processing
-
-Scenario: System processes image and uploads to API
-Given the system has received a tree photo
-When the AI processes the image
-Then it should extract the GPS coordinates within 5 feet accuracy
-And determine the tree diameter
-And upload the photo to /upload.php
-And receive a valid photo URL in response
-
-Scenario: System creates tree report
-Given the system has processed an image
-And received a valid photo URL
-When the system calls /updateDB.php
-Then it should include:
-  | Field       | Value                    |
-  | description | "Downed tree reported via SMS" |
-  | diameter    | {extracted diameter}     |
-  | latitude    | {extracted latitude}     |
-  | longitude   | {extracted longitude}    |
-  | PictureName | {uploaded photo URL}     |
-And receive a success status in response
-
-Scenario: User submits report while offline
-Given a user has no cellular service
-When they attempt to send a photo via SMS
-Then their device should queue the message
-And send it when service is restored
-
-Scenario: API submission fails
-Given the system has processed an image
-When the API call fails
-Then the system should queue the submission for retry
-And preserve all extracted data
-```
-
 ## Technical Stack Recommendations
 
 1. SMS Processing:
@@ -229,6 +183,17 @@ And preserve all extracted data
 - A Cloudflare account
 - A Twilio account
 
+### Twilio Webhook Setup
+
+1. Log into your [Twilio Console](https://console.twilio.com)
+2. Navigate to Phone Numbers > Manage > Active Numbers
+3. Click on your number
+4. Under "Messaging" section:
+   - Set "When a message comes in" to "Webhook"
+   - Set the webhook URL to your Cloudflare Worker URL + "/sms"
+   - Example: `https://tree-spotter.mike-gehard.workers.dev`
+   - Set the HTTP method to POST
+
 ### Environment Setup
 
 1. Clone the repository
@@ -252,28 +217,6 @@ To start development:
 1. Open the project in VS Code
 2. When prompted, click "Reopen in Container"
 3. The container will build and install all necessary dependencies
-
-## Project Structure
-
-```
-tree-spotter/
-├── src/
-│   ├── index.ts          # Main Worker entry point
-│   ├── image-processor.ts # Image processing and EXIF extraction
-│   └── types.ts          # TypeScript type definitions
-├── test/
-│   ├── env.d.ts          # Test environment type definitions
-│   └── tsconfig.json     # TypeScript config for tests
-├── .env.example          # Template for environment variables
-├── .env                  # Local environment variables (git-ignored)
-├── .editorconfig        # Editor configuration
-├── .prettierrc         # Code formatting rules
-├── package.json        # Project dependencies and scripts
-├── tsconfig.json      # TypeScript configuration
-├── vitest.config.mts  # Vitest test configuration
-├── worker-configuration.d.ts # Worker type definitions
-└── wrangler.jsonc     # Cloudflare Workers configuration
-```
 
 ### Dependencies
 
