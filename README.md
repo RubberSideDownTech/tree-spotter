@@ -191,7 +191,7 @@ The system integrates with the Wild Trails Sawyer API which provides:
 4. Under "Messaging" section:
    - Set "When a message comes in" to "Webhook"
    - Set the webhook URL to your Cloudflare Worker URL + "/sms"
-   - Example: `https://tree-spotter.mike-gehard.workers.dev`
+   - Example: `https://tree-spotter.mike-gehard.workers.dev/sms`
    - Set the HTTP method to POST
 
 ### Environment Setup
