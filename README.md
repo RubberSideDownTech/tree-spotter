@@ -1,8 +1,11 @@
 # Tree Spotter
+
 An AI backed service that allows you to text a picture of a downed tree and have it geolocated and sized. This helps sawyers know where trees are and how big of a saw to bring.
 
 ## Personas
+
 ### Spotter
+
 As an avid person who explores trails in the woods
 
 I want to be able to take a picture of a downed tree, text it to a phone number and have it geolocated and sized. This helps sawyers know where trees are and how big of a saw to bring.
@@ -12,6 +15,7 @@ So that I can help keep the trails clear and safe for everyone.
 ## Technical Requirements
 
 1. Message Handling
+
    - Support SMS message receipt with attached images
    - Store messages when received for processing
    - Support offline message queuing on user's device
@@ -19,6 +23,7 @@ So that I can help keep the trails clear and safe for everyone.
    - Send simple "Thank you for your submission" response
 
 2. Image Processing
+
    - Extract GPS coordinates from image metadata
    - Use AI to analyze tree diameter from image
    - Target location accuracy within 5 feet
@@ -33,7 +38,9 @@ So that I can help keep the trails clear and safe for everyone.
 ## API Integration Details
 
 The system integrates with the Wild Trails Sawyer API which provides:
+
 1. Photo Upload Endpoint (/upload.php)
+
    - Accepts multipart/form-data
    - Returns URL of uploaded photo
 
@@ -48,11 +55,13 @@ The system integrates with the Wild Trails Sawyer API which provides:
 ## Future Enhancements
 
 1. Message Validation
+
    - Implement minimum image quality requirements
    - Add rate limiting for submissions per phone number
    - Validate supported trail areas/regions
 
 2. API Handling
+
    - Implement exponential backoff for API retry attempts
    - Add rate limiting for API submissions
    - Enhanced error handling for API unavailability
@@ -65,6 +74,7 @@ The system integrates with the Wild Trails Sawyer API which provides:
 ## Acceptance Criteria
 
 ### Feature: Tree Report Submission via SMS
+
 ```gherkin
 Scenario: User submits a tree report with image
 Given a user has taken a photo of a downed tree
@@ -110,15 +120,18 @@ And preserve all extracted data
 ## Technical Stack Recommendations
 
 1. SMS Processing:
+
    - Twilio API for SMS handling and response
    - Message queue system for reliable processing
 
 2. Image Processing:
+
    - TensorFlow or PyTorch for AI image analysis
    - ExifTool for GPS metadata extraction
    - Custom ML model for tree diameter estimation
 
 3. Backend:
+
    - Serverless architecture for scalability
    - Queue-based message processing
    - Retry mechanism for API submissions
@@ -130,13 +143,16 @@ And preserve all extracted data
 ## Implementation Stack
 
 ### Core Infrastructure (Cloudflare)
+
 1. **Compute Layer**
+
    - Cloudflare Workers (TypeScript-based)
    - Edge processing for optimal performance
    - Built-in TypeScript support
    - 100,000 requests/day free tier
 
 2. **Storage Layer**
+
    - Cloudflare R2 for image storage
      - S3-compatible API
      - 10GB free storage
@@ -152,7 +168,9 @@ And preserve all extracted data
      - Message retention and retry capability
 
 ### External Services
+
 1. **SMS Integration**
+
    - Twilio
      - SMS/MMS handling
      - Webhook integration with Workers
@@ -167,7 +185,9 @@ And preserve all extracted data
      - Efficient metadata extraction
 
 ### System Components
+
 1. **Webhook Handler**
+
    - Receives Twilio SMS notifications
    - Validates incoming messages
    - Stores images in R2
@@ -175,6 +195,7 @@ And preserve all extracted data
    - Sends acknowledgments
 
 2. **Image Processor**
+
    - Extracts EXIF/GPS data
    - Runs tree diameter analysis
    - Optimizes images if needed
@@ -186,7 +207,9 @@ And preserve all extracted data
    - Manages submission state in KV storage
 
 ### Development Tools
+
 1. **Local Development**
+
    - Wrangler CLI
    - TypeScript
    - Jest for testing
@@ -197,7 +220,51 @@ And preserve all extracted data
    - Automated testing
    - Staged deployments
 
+## Development Setup
+
+### Prerequisites
+
+- VS Code with Dev Containers extension
+- Docker
+- A Cloudflare account
+- A Twilio account
+
+### Environment Setup
+
+1. Clone the repository
+2. Copy `.env.example` to `.env`
+3. Fill in the environment variables:
+   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+   - `TWILIO_AUTH_TOKEN`: Your Twilio auth token
+
+### Development Container
+
+This project uses VS Code Dev Containers for development. The container includes:
+
+- Node.js LTS
+- TypeScript
+- Wrangler (Cloudflare Workers CLI)
+- Essential VS Code extensions
+
+To start development:
+
+1. Open the project in VS Code
+2. When prompted, click "Reopen in Container"
+3. The container will build and install all necessary dependencies
+
+## Project Structure
+
+```
+tree-spotter/
+├── .env.example    # Template for environment variables
+├── .env           # Local environment variables (git-ignored)
+├── wrangler.toml  # Cloudflare Workers configuration
+└── README.md
+```
+
 ### Cost Estimation (Monthly)
+
 - Cloudflare Workers: Free tier (100K requests/day)
 - R2 Storage: Free tier (10GB)
 - Queues: Free tier (1M operations)
@@ -205,6 +272,7 @@ And preserve all extracted data
 - Total Estimated Cost: $10-15/month
 
 This implementation provides:
+
 - Globally distributed processing
 - Minimal operational overhead
 - Cost-effective scaling

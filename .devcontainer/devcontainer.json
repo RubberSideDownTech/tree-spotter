@@ -7,13 +7,25 @@
             "configureZshAsDefaultShell": true,
             "username": "vscode",
             "upgradePackages": true
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
         }
     },
+    "runArgs": ["--env-file", ".env"],
     "remoteUser": "vscode",
     "customizations": {
         "vscode": {
-            "settings": {},
-            "extensions": []
+            "settings": {
+                "editor.formatOnSave": true,
+                "typescript.updateImportsOnFileMove.enabled": "always"
+            },
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "cloudflare.cloudflare-workers-vscode"
+            ]
         }
-    }
+    },
+    "postCreateCommand": "npm install -g wrangler typescript"
 }
