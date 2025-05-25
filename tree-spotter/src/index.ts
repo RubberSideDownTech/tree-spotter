@@ -1,18 +1,30 @@
 import { ImageProcessor } from './image-processor';
 import type { Env, TwilioMessage, ProcessingJob } from './types';
+import { createHmac } from 'crypto';
 
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+function validateTwilioRequest(request: Request, authToken: string, twilioSignature: string | null, url: string, params: Record<string, string>): boolean {
+	if (!twilioSignature) return false;
+
+	// Sort the params
+	const sortedParams = Object.keys(params)
+		.sort()
+		.reduce((acc, key) => {
+			acc[key] = params[key];
+			return acc;
+		}, {} as Record<string, string>);
+
+	// Create the string to sign
+	const stringToSign = url + Object.keys(sortedParams)
+		.map(key => key + sortedParams[key])
+		.join('');
+
+	// Create the signature
+	const signature = createHmac('sha1', authToken)
+		.update(stringToSign)
+		.digest('base64');
+
+	return signature === twilioSignature;
+}
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -20,8 +32,23 @@ export default {
 
 		// Handle Twilio webhooks
 		if (url.pathname === '/sms' && request.method === 'POST') {
+			const twilioSignature = request.headers.get('X-Twilio-Signature');
 			const formData = await request.formData();
 			const formEntries = Object.fromEntries(formData.entries());
+
+			// Validate the request is from Twilio
+			const isValid = validateTwilioRequest(
+				request,
+				env.TWILIO_AUTH_TOKEN,
+				twilioSignature,
+				url.toString(),
+				formEntries as Record<string, string>
+			);
+
+			if (!isValid) {
+				return new Response('Unauthorized', { status: 401 });
+			}
+
 			const message: TwilioMessage = {
 				MessageSid: String(formEntries.MessageSid || ''),
 				From: String(formEntries.From || ''),
