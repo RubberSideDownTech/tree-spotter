@@ -126,3 +126,87 @@ And preserve all extracted data
 4. Storage:
    - Secure blob storage for images
    - Message queue for processing state
+
+## Implementation Stack
+
+### Core Infrastructure (Cloudflare)
+1. **Compute Layer**
+   - Cloudflare Workers (TypeScript-based)
+   - Edge processing for optimal performance
+   - Built-in TypeScript support
+   - 100,000 requests/day free tier
+
+2. **Storage Layer**
+   - Cloudflare R2 for image storage
+     - S3-compatible API
+     - 10GB free storage
+     - No egress fees
+   - Cloudflare KV for metadata
+     - Low-latency key-value storage
+     - Perfect for storing submission states
+
+3. **Queue System**
+   - Cloudflare Queues
+     - Built-in support for FIFO queues
+     - 1 million operations free
+     - Message retention and retry capability
+
+### External Services
+1. **SMS Integration**
+   - Twilio
+     - SMS/MMS handling
+     - Webhook integration with Workers
+     - Pay-per-use pricing
+
+2. **AI/ML Processing**
+   - TensorFlow.js
+     - Web assembly support in Workers
+     - Custom model for tree diameter estimation
+   - Sharp for image processing
+     - Runs in Workers environment
+     - Efficient metadata extraction
+
+### System Components
+1. **Webhook Handler**
+   - Receives Twilio SMS notifications
+   - Validates incoming messages
+   - Stores images in R2
+   - Queues processing jobs
+   - Sends acknowledgments
+
+2. **Image Processor**
+   - Extracts EXIF/GPS data
+   - Runs tree diameter analysis
+   - Optimizes images if needed
+   - Queues API submissions
+
+3. **API Integration**
+   - Handles Wild Trails Sawyer API communication
+   - Implements retry logic with exponential backoff
+   - Manages submission state in KV storage
+
+### Development Tools
+1. **Local Development**
+   - Wrangler CLI
+   - TypeScript
+   - Jest for testing
+   - ESLint + Prettier
+
+2. **Deployment**
+   - GitHub Actions for CI/CD
+   - Automated testing
+   - Staged deployments
+
+### Cost Estimation (Monthly)
+- Cloudflare Workers: Free tier (100K requests/day)
+- R2 Storage: Free tier (10GB)
+- Queues: Free tier (1M operations)
+- Twilio: ~$10-15 (based on volume)
+- Total Estimated Cost: $10-15/month
+
+This implementation provides:
+- Globally distributed processing
+- Minimal operational overhead
+- Cost-effective scaling
+- Built-in retry mechanisms
+- Edge processing for faster response times
