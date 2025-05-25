@@ -257,24 +257,118 @@ To start development:
 
 ```
 tree-spotter/
-├── .env.example    # Template for environment variables
-├── .env           # Local environment variables (git-ignored)
-├── wrangler.toml  # Cloudflare Workers configuration
-└── README.md
+├── src/
+│   ├── index.ts          # Main Worker entry point
+│   ├── image-processor.ts # Image processing and EXIF extraction
+│   └── types.ts          # TypeScript type definitions
+├── test/
+│   ├── env.d.ts          # Test environment type definitions
+│   └── tsconfig.json     # TypeScript config for tests
+├── .env.example          # Template for environment variables
+├── .env                  # Local environment variables (git-ignored)
+├── .editorconfig        # Editor configuration
+├── .prettierrc         # Code formatting rules
+├── package.json        # Project dependencies and scripts
+├── tsconfig.json      # TypeScript configuration
+├── vitest.config.mts  # Vitest test configuration
+├── worker-configuration.d.ts # Worker type definitions
+└── wrangler.jsonc     # Cloudflare Workers configuration
 ```
 
-### Cost Estimation (Monthly)
+### Dependencies
 
-- Cloudflare Workers: Free tier (100K requests/day)
-- R2 Storage: Free tier (10GB)
-- Queues: Free tier (1M operations)
-- Twilio: ~$10-15 (based on volume)
-- Total Estimated Cost: $10-15/month
+Core dependencies:
 
-This implementation provides:
+- `exifreader`: Used for extracting EXIF/GPS data from images
+- `sharp`: Image processing and optimization
+- `@cloudflare/workers-types`: Type definitions for Cloudflare Workers
 
-- Globally distributed processing
-- Minimal operational overhead
-- Cost-effective scaling
-- Built-in retry mechanisms
-- Edge processing for faster response times
+Development dependencies:
+
+- `wrangler`: Cloudflare Workers CLI tool
+- `vitest`: Testing framework
+- `typescript`: TypeScript compiler
+- `@cloudflare/vitest-pool-workers`: Workers-specific test environment
+
+### Key Scripts
+
+- `npm start` or `npm run dev`: Start local development server
+- `npm run deploy`: Deploy to Cloudflare Workers
+- `npm test`: Run test suite
+- `npm run cf-typegen`: Generate TypeScript types from Wrangler configuration
+
+### Cloudflare Resources
+
+The project uses the following Cloudflare resources:
+
+1. R2 Bucket:
+
+   - Name: `tree-images`
+   - Binding: `TREE_IMAGES`
+   - Purpose: Stores uploaded tree images
+
+2. KV Namespace:
+   - Binding: `METADATA`
+   - Purpose: Stores submission metadata and processing state
+
+### Environment Variables
+
+Required environment variables:
+
+```bash
+# Cloudflare configuration
+CLOUDFLARE_API_TOKEN=     # Your Cloudflare API token
+CLOUDFLARE_ACCOUNT_ID=    # Your Cloudflare account ID
+
+# Twilio configuration
+TWILIO_AUTH_TOKEN=        # Your Twilio auth token
+TWILIO_ACCOUNT_SID=       # Your Twilio account SID
+```
+
+### Testing
+
+Tests are written using Vitest and run in a Workers-like environment using `@cloudflare/vitest-pool-workers`. This ensures tests accurately reflect the production environment.
+
+To run tests:
+
+```bash
+npm test
+```
+
+For watch mode during development:
+
+```bash
+npm test -- --watch
+```
+
+### Local Development
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Fill in the `.env` file with your credentials
+
+4. Start the development server:
+
+   ```bash
+   npm start
+   ```
+
+5. The server will be available at `http://localhost:8787`
+
+### Important Notes
+
+- Images are processed using the `ImageProcessor` class which extracts GPS coordinates from EXIF data
+- The project uses TypeScript strict mode for better type safety
+- All Cloudflare Workers features are configured in `wrangler.jsonc`
+- The service is designed to run at the edge using Cloudflare Workers
+- Development is done using the provided dev container which includes all necessary tools
