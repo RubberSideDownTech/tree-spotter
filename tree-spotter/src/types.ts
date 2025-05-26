@@ -8,6 +8,7 @@ export interface TwilioMessage {
     images: TwilioImage[];
 }
 
+// lazy load the image contents
 export interface TwilioImage {
     url: string;
     contentType: string;
@@ -15,6 +16,7 @@ export interface TwilioImage {
 }
 
 export interface TwilioImageLoadError {
+    url: string; // the URL of the image that failed to load
     message: string;
 }
 

@@ -3,6 +3,9 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
+		"build": "tsc",
+		"type-check": "tsc --noEmit",
+		"type-check:watch": "tsc --noEmit --watch",
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
