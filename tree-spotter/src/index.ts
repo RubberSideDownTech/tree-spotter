@@ -1,10 +1,11 @@
 import type { Env } from './types';
-import { validateTwilioRequest } from './twilio';
+// import { validateTwilioRequest } from './twilio';
 
 export default {
 	async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
 		console.log(`[${new Date().toISOString()}] Incoming request to ${url.pathname}`);
+
 
 		if (url.pathname === '/sms' && request.method === 'POST') {
 			const formData = await request.formData();
@@ -12,21 +13,17 @@ export default {
 				Array.from(formData.entries()).map(([k, v]) => [k, typeof v === 'string' ? v : String(v)])
 			);
 
-			const isValid = validateTwilioRequest(
-				url.toString(),
-				formEntries,
-				request.headers.get('X-Twilio-Signature') || '',
-				env.TWILIO_AUTH_TOKEN,
-			);
+			// const isValid = validateTwilioRequest(
+			// 	url.toString(),
+			// 	formEntries,
+			// 	request.headers.get('X-Twilio-Signature') || '',
+			// 	env.TWILIO_AUTH_TOKEN,
+			// );
 
-			if (!isValid) {
-				console.warn('Invalid Twilio signature received');
-				return new Response('Unauthorized', { status: 401 });
-			}
-
-			for (const [key, value] of Object.entries(formEntries)) {
-				console.log(`Key: ${key}, Value: ${value}`);
-			}
+			// if (!isValid) {
+			// 	console.warn('Invalid Twilio signature received');
+			// 	return new Response('Unauthorized', { status: 401 });
+			// }
 
 			return new Response(
 				'<?xml version="1.0" encoding="UTF-8"?><Response><Message>Thank you for your submission! We will process your tree report.</Message></Response>',

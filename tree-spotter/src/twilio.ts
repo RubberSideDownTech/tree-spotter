@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 export function validateTwilioRequest(
     url: string,
@@ -20,5 +20,8 @@ export function validateTwilioRequest(
     const expectedSignature = hmac.digest('base64');
 
     // Compare signatures using constant-time comparison to prevent timing attacks
-    return expectedSignature === twilioSignature;
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const actualBuffer = Buffer.from(twilioSignature);
+    if (expectedBuffer.length !== actualBuffer.length) return false;
+    return timingSafeEqual(expectedBuffer, actualBuffer);
 }
