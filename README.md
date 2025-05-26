@@ -27,16 +27,18 @@ FormEntries → TwilioMessage → TreeImage[] (with errors)
 #### Key Components
 
 1. **Result Types**: Type-safe success/failure handling
+
    ```typescript
-   type Result<T, E> = Success<T> | Failure<E>
+   type Result<T, E> = Success<T> | Failure<E>;
    ```
 
 2. **Error Collection**: Partial success with detailed error reporting
+
    ```typescript
    type CollectionResult<T, E> = {
      successes: T[];
      failures: E[];
-   }
+   };
    ```
 
 3. **Processing Pipeline**:
@@ -49,8 +51,9 @@ FormEntries → TwilioMessage → TreeImage[] (with errors)
 #### Error Types
 
 The system handles three specific error categories:
+
 - `TwilioImageLoadError`: Image download failures
-- `GpsResolutionError`: EXIF/GPS extraction failures  
+- `GpsResolutionError`: EXIF/GPS extraction failures
 - `DiameterCalculationError`: ML model processing failures
 
 Each error includes the image URL for debugging and detailed error messages.
@@ -386,3 +389,7 @@ tree-spotter/src/
 - The service is designed to run at the edge using Cloudflare Workers
 - Development is done using the provided dev container which includes all necessary tools
 - Type checking is available via `npm run type-check` to ensure code quality
+- To grab Twilio images use:
+  ```
+  curl -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN -o output_file.jpg -l  <imageURL>
+  ```
