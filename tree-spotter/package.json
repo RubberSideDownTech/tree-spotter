@@ -10,6 +10,7 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest run",
+		"test:watch": "vitest",
 		"cf-typegen": "wrangler types"
 	},
 	"devDependencies": {

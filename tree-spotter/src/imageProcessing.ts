@@ -150,7 +150,9 @@ function extractGpsFromImage(contents: Buffer, url: string): Result<GpsCoordinat
 
     // Extract latitude
     let latitude: number;
-    if (typeof tags.GPSLatitude.description === 'string') {
+    if (typeof tags.GPSLatitude.description === 'number') {
+      latitude = tags.GPSLatitude.description;
+    } else if (typeof tags.GPSLatitude.description === 'string') {
       latitude = parseFloat(tags.GPSLatitude.description);
     } else {
       return failure({
@@ -162,7 +164,9 @@ function extractGpsFromImage(contents: Buffer, url: string): Result<GpsCoordinat
 
     // Extract longitude
     let longitude: number;
-    if (typeof tags.GPSLongitude.description === 'string') {
+    if (typeof tags.GPSLongitude.description === 'number') {
+      longitude = tags.GPSLongitude.description;
+    } else if (typeof tags.GPSLongitude.description === 'string') {
       longitude = parseFloat(tags.GPSLongitude.description);
     } else {
       return failure({
@@ -173,11 +177,11 @@ function extractGpsFromImage(contents: Buffer, url: string): Result<GpsCoordinat
     }
 
     // Handle GPS direction references (N/S for latitude, E/W for longitude)
-    if (tags.GPSLatitudeRef && tags.GPSLatitudeRef.description === 'S') {
+    if (tags.GPSLatitudeRef && (tags.GPSLatitudeRef.description === 'S' || tags.GPSLatitudeRef.description === 'South latitude')) {
       latitude = -latitude;
     }
 
-    if (tags.GPSLongitudeRef && tags.GPSLongitudeRef.description === 'W') {
+    if (tags.GPSLongitudeRef && (tags.GPSLongitudeRef.description === 'W' || tags.GPSLongitudeRef.description === 'West longitude')) {
       longitude = -longitude;
     }
 

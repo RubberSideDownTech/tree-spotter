@@ -391,5 +391,5 @@ tree-spotter/src/
 - Type checking is available via `npm run type-check` to ensure code quality
 - To grab Twilio images use:
   ```
-  curl -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN -o output_file.jpg -l  <imageURL>
+  curl -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN -o output_file.jpg -L -v <imageURL>
   ```
