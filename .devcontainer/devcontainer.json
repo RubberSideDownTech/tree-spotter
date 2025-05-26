@@ -10,7 +10,8 @@
         },
         "ghcr.io/devcontainers/features/node:1": {
             "version": "lts"
-        }
+        },
+        "ghcr.io/mikegehard/goose-devcontainer-feature/goose:1": {}
     },
     "runArgs": ["--env-file", ".env"],
     "remoteUser": "vscode",
@@ -27,5 +28,5 @@
             ]
         }
     },
-    "postCreateCommand": "npm install -g wrangler typescript"
+    "postCreateCommand": "npm install -g wrangler typescript && mkdir -p ~/.config/goose && cp .devcontainer/goose-config.yaml ~/.config/goose/config.yaml"
 }

@@ -1,0 +1,11 @@
+ANTHROPIC_HOST: https://api.anthropic.com
+GOOSE_PROVIDER: anthropic
+GOOSE_MODEL: claude-sonnet-4-20250514
+extensions:
+  developer:
+    bundled: true
+    display_name: Developer Tools
+    enabled: true
+    name: developer
+    timeout: 300
+    type: builtin
