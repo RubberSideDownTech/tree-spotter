@@ -1,4 +1,5 @@
 import { TwilioMessage, TwilioImage, TreeImage, GpsCoordinate } from './types';
+import ExifReader from 'exifreader';
 
 // Result types for ROP
 type Result<T, E> = Success<T> | Failure<E>;
@@ -134,7 +135,82 @@ async function loadImageContents(image: TwilioImage): Promise<Result<Buffer, Twi
 }
 
 function extractGpsFromImage(contents: Buffer, url: string): Result<GpsCoordinate, GpsResolutionError> {
-  throw new Error("Not implemented");
+  try {
+    // Parse EXIF data from the image buffer
+    const tags = ExifReader.load(contents);
+
+    // Check if GPS data exists
+    if (!tags.GPSLatitude || !tags.GPSLongitude) {
+      return failure({
+        type: 'gps_extraction',
+        imageUrl: url,
+        message: 'No GPS coordinates found in image EXIF data'
+      });
+    }
+
+    // Extract latitude
+    let latitude: number;
+    if (typeof tags.GPSLatitude.description === 'string') {
+      latitude = parseFloat(tags.GPSLatitude.description);
+    } else {
+      return failure({
+        type: 'gps_extraction',
+        imageUrl: url,
+        message: 'Invalid GPS latitude format in EXIF data'
+      });
+    }
+
+    // Extract longitude
+    let longitude: number;
+    if (typeof tags.GPSLongitude.description === 'string') {
+      longitude = parseFloat(tags.GPSLongitude.description);
+    } else {
+      return failure({
+        type: 'gps_extraction',
+        imageUrl: url,
+        message: 'Invalid GPS longitude format in EXIF data'
+      });
+    }
+
+    // Handle GPS direction references (N/S for latitude, E/W for longitude)
+    if (tags.GPSLatitudeRef && tags.GPSLatitudeRef.description === 'S') {
+      latitude = -latitude;
+    }
+
+    if (tags.GPSLongitudeRef && tags.GPSLongitudeRef.description === 'W') {
+      longitude = -longitude;
+    }
+
+    // Validate coordinates are within valid ranges
+    if (latitude < -90 || latitude > 90) {
+      return failure({
+        type: 'gps_extraction',
+        imageUrl: url,
+        message: `Invalid latitude value: ${latitude}. Must be between -90 and 90.`
+      });
+    }
+
+    if (longitude < -180 || longitude > 180) {
+      return failure({
+        type: 'gps_extraction',
+        imageUrl: url,
+        message: `Invalid longitude value: ${longitude}. Must be between -180 and 180.`
+      });
+    }
+
+    return success({
+      latitude,
+      longitude
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return failure({
+      type: 'gps_extraction',
+      imageUrl: url,
+      message: `Failed to parse EXIF data: ${errorMessage}`
+    });
+  }
 }
 
 function calculateDiameter(contents: Buffer, url: string): Promise<Result<number, DiameterCalculationError>> {
