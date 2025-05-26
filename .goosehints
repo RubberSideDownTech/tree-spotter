@@ -1,0 +1,9 @@
+# Session logs
+
+- Session logs can be found in ~/.local/share/goose/sessions/
+- when I ask you to list prompts for a session, us the file that was written most recently from that directory.
+
+# Validation
+
+- As you are making changes, use the terminal command `npm run type-check && npm run test` to find errors.
+- If you find an error in that command, fix using error message and re-run command until command runs successfully.
