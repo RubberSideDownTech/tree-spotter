@@ -14,21 +14,8 @@
 	"observability": {
 		"enabled": true
 	},
-	"r2_buckets": [
-		{
-			"binding": "TREE_IMAGES",
-			"bucket_name": "tree-images"
-		}
-	],
-	"kv_namespaces": [
-		{
-			"binding": "METADATA",
-			"id": "8d99fdfbb9d341e9bab7002e1a1603b0"
-		}
-	],
 	"vars": {
-		"TWILIO_ACCOUNT_SID": "",  // Will be overridden by secret
-		"TWILIO_AUTH_TOKEN": ""    // Will be overridden by secret
+		"SENDGRID_API_KEY": "",  // Will be overridden by secret
 	}
 
 	/**

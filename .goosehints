@@ -5,5 +5,5 @@
 
 # Validation
 
-- As you are making changes, use the terminal command `npm run type-check && npm run test` to find errors.
+- As you are making changes, use the terminal command `npm run type-check && npm test` to find errors.
 - If you find an error in that command, fix using error message and re-run command until command runs successfully.

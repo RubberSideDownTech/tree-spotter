@@ -33,15 +33,6 @@ describe('extractGpsFromImage', () => {
       }
     });
 
-    it('should process an image with GPS coordinates from Twilio', () => {
-      const imageBuffer = loadImageFixture('tree-1-from-twilio.jpeg');
-      expect(imageBuffer.length).toBeGreaterThan(0);
-
-      const result = extractGpsFromImage(imageBuffer, 'test-fixtures/tree-1-from-twilio.jpeg');
-
-      expect(result.success).toBe(true);
-    });
-
     it('should process an image without GPS coordinates', () => {
       const imageBuffer = loadImageFixture('no-gps-from-trailforks.jpg');
       expect(imageBuffer.length).toBeGreaterThan(0);
@@ -51,7 +42,7 @@ describe('extractGpsFromImage', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.type).toBe('gps_extraction');
-        expect(result.error.imageUrl).toBe('test-fixtures/no-gps-from-trailforks.jpg');
+        expect(result.error.imageName).toBe('test-fixtures/no-gps-from-trailforks.jpg');
         expect(result.error.message).toMatch(/No GPS coordinates found|Failed to parse EXIF data/);
       }
     });
@@ -62,12 +53,12 @@ describe('extractGpsFromImage', () => {
     it('should return failure when buffer has no EXIF data', () => {
       // Create a simple buffer without EXIF data
       const emptyBuffer = Buffer.from([]);
-      const result = extractGpsFromImage(emptyBuffer, 'test-url');
+      const result = extractGpsFromImage(emptyBuffer, 'test-name');
 
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.type).toBe('gps_extraction');
-        expect(result.error.imageUrl).toBe('test-url');
+        expect(result.error.imageName).toBe('test-name');
         expect(result.error.message).toContain('Failed to parse EXIF data');
       }
     });
@@ -75,12 +66,12 @@ describe('extractGpsFromImage', () => {
     it('should return failure when buffer has invalid EXIF data', () => {
       // Create a buffer with invalid data
       const invalidBuffer = Buffer.from('invalid image data');
-      const result = extractGpsFromImage(invalidBuffer, 'test-url');
+      const result = extractGpsFromImage(invalidBuffer, 'test-name');
 
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.type).toBe('gps_extraction');
-        expect(result.error.imageUrl).toBe('test-url');
+        expect(result.error.imageName).toBe('test-name');
         expect(result.error.message).toContain('Failed to parse EXIF data');
       }
     });

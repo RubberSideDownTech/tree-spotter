@@ -1,27 +1,43 @@
 # Tree Spotter
 
-An AI backed service that allows you to text a picture of a downed tree and have it geolocated and sized. This helps sawyers know where trees are and how big of a saw to bring.
+A Cloudflare Worker application that processes tree images with GPS coordinates for tree detection and analysis. The application receives images via email through SendGrid's Inbound Parse Webhook and extracts GPS location data and tree diameter measurements.
 
-## Personas
+## Overview
 
-### Spotter
+Tree Spotter allows users to submit tree images by sending them via email. The application processes these images to extract:
 
-As an avid person who explores trails in the woods
+- GPS coordinates from EXIF data
+- Tree diameter measurements
+- Image metadata for analysis
 
-I want to be able to take a picture of a downed tree, text it to a phone number and have it geolocated and sized. This helps sawyers know where trees are and how big of a saw to bring.
+**Note**: Email delivery preserves the original image metadata, ensuring accurate GPS coordinate extraction from EXIF data.
 
-So that I can help keep the trails clear and safe for everyone.
+## Features
+
+- **Email-based Image Submission**: Receive tree images via email using SendGrid's Inbound Parse
+- **GPS Extraction**: Extract latitude and longitude from image EXIF data
+- **Tree Diameter Calculation**: Analyze images to calculate tree diameter measurements
+- **Image Processing Pipeline**: Robust processing with error handling and retry logic
+- **Parallel Processing**: Handle multiple images efficiently
+- **Health Monitoring**: Built-in health check endpoint
 
 ## Architecture
 
+The application is built as a Cloudflare Worker with the following components:
+
+- **Email Handler**: Processes incoming emails from SendGrid's Inbound Parse Webhook
+- **Image Processing Pipeline**: Extracts GPS coordinates and calculates tree measurements
+- **Error Handling**: Comprehensive error handling for image loading, GPS extraction, and diameter calculation
+- **Response System**: Sends confirmation emails back to users
+
 ### Railway Oriented Programming (ROP)
 
-The image processing pipeline is built using Railway Oriented Programming principles, which provides robust error handling and composable functions. The pipeline transforms Twilio SMS messages into processed tree data.
+The image processing pipeline is built using Railway Oriented Programming principles, which provides robust error handling and composable functions. The pipeline transforms email messages into processed tree data.
 
 #### Core Pipeline Flow
 
 ```
-FormEntries → TwilioMessage → TreeImage[] (with errors)
+EmailData → TreeImage[] (with errors)
 ```
 
 #### Key Components
@@ -42,7 +58,7 @@ FormEntries → TwilioMessage → TreeImage[] (with errors)
    ```
 
 3. **Processing Pipeline**:
-   - `loadImageContents()`: Downloads image from Twilio URL
+   - `loadImageContents()`: Downloads image from email attachments
    - `extractGpsFromImage()`: Extracts GPS coordinates from EXIF data
    - `calculateDiameter()`: Uses ML model to estimate tree diameter
    - `processImage()`: Orchestrates single image processing
@@ -52,11 +68,10 @@ FormEntries → TwilioMessage → TreeImage[] (with errors)
 
 The system handles three specific error categories:
 
-- `TwilioImageLoadError`: Image download failures
 - `GpsResolutionError`: EXIF/GPS extraction failures
 - `DiameterCalculationError`: ML model processing failures
 
-Each error includes the image URL for debugging and detailed error messages.
+Each error includes the image source for debugging and detailed error messages.
 
 #### Benefits
 
@@ -66,15 +81,242 @@ Each error includes the image URL for debugging and detailed error messages.
 - **Composability**: Functions can be easily tested and reused
 - **Parallel Processing**: Images processed concurrently for performance
 
+## Setup
+
+### Prerequisites
+
+- Cloudflare Workers account
+- SendGrid account with Inbound Parse enabled
+- Node.js 18+ and npm
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd tree-spotter
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+### SendGrid Inbound Parse Setup
+
+#### 1. SendGrid Account Setup
+
+- Sign up at sendgrid.com (free tier is fine)
+- Verify your account and complete basic setup
+
+#### 2. Configure Inbound Parse
+
+In your SendGrid dashboard:
+
+- Go to **Settings** → **Inbound Parse**
+- Click **Add Host & URL**
+
+#### 3. DNS Configuration
+
+You'll need to set up MX records for your domain (or subdomain):
+
+**Option A: Subdomain (Recommended)**
+
+- Use something like `trees.yourdomain.com`
+- Add MX record: `trees.yourdomain.com` → `mx.sendgrid.net` (priority 10)
+
+**Option B: Full domain**
+
+- Points your entire domain's email to SendGrid
+- MX record: `yourdomain.com` → `mx.sendgrid.net` (priority 10)
+
+#### 4. SendGrid Configuration
+
+Back in the Inbound Parse settings:
+
+- **Hostname**: `trees.yourdomain.com` (or whatever you chose)
+- **URL**: Your Cloudflare Worker endpoint (e.g., `https://your-worker.your-subdomain.workers.dev/email`)
+- **Spam Check**: Enable (recommended)
+- **Send Raw**: Disable (parsed format is easier)
+- **POST the raw, full MIME message**: Disable
+
+#### 5. Testing
+
+Once everything is configured:
+
+**Test the setup:**
+
+- Send an email with photo attachments to `trees@yourdomain.com`
+- Check your Cloudflare Worker logs to see if the webhook fired
+- Verify attachment data is being received
+
+**Common issues:**
+
+- DNS propagation can take up to 24 hours
+- Make sure your Cloudflare Worker route matches the webhook URL
+- Check SendGrid's activity log for delivery issues
+
+## Usage
+
+### Submitting Trees via Email
+
+Users can submit tree images by sending an email to the configured address (e.g., `trees@yourdomain.com`) with:
+
+- **Subject**: Any subject line (optional)
+- **Body**: Any text content (optional)
+- **Attachments**: One or more tree images with GPS EXIF data
+
+### Image Requirements
+
+- **Format**: JPEG, PNG, or other common image formats
+- **GPS Data**: Images must contain GPS coordinates in EXIF metadata
+- **Quality**: High-resolution images provide better diameter calculations
+
+### Example Email
+
+```
+To: trees@yourdomain.com
+Subject: Oak tree in Central Park
+Body: Found this beautiful oak tree during my morning walk.
+
+Attachments: oak_tree_photo.jpg
+```
+
+## API Endpoints
+
+### `POST /email`
+
+Processes incoming emails from SendGrid's Inbound Parse Webhook.
+
+**Request**: SendGrid webhook payload with email data and attachments
+**Response**: HTTP 200 with processing status
+
+### `GET /health`
+
+Health check endpoint for monitoring.
+
+**Response**:
+
+```
+200 OK
+"OK"
+```
+
+## Development
+
+### Local Development
+
+```bash
+# Start the development server
+npm run dev
+
+# Run type checking
+npm run type-check
+
+# Run tests
+npm test
+```
+
+### Testing with ngrok
+
+For local testing with SendGrid webhooks:
+
+1. Start your local development server:
+
+```bash
+npm run dev
+```
+
+2. In another terminal, expose your local server:
+
+```bash
+ngrok http 8787
+```
+
+3. Update your SendGrid Inbound Parse URL to the ngrok URL:
+
+```
+https://your-ngrok-id.ngrok.io/email
+```
+
+### Deployment
+
+```bash
+# Build the project
+npm run build
+
+# Deploy to Cloudflare Workers
+npm run deploy
+```
+
+### Project Structure
+
+```
+tree-spotter/src/
+├── index.ts           # Main Cloudflare Worker entry point and email webhook handler
+├── types.ts           # Core type definitions (EmailMessage, Tree, etc.)
+├── imageProcessing.ts # Railway-oriented processing pipeline
+└── sendgrid.ts        # SendGrid webhook validation utilities
+```
+
+#### Key Files
+
+- **`types.ts`**: Defines the core data structures for transforming email messages into tree data
+- **`imageProcessing.ts`**: Contains the Railway Oriented Programming pipeline with type-safe error handling
+- **`index.ts`**: Main application entry point that orchestrates the pipeline from email data to processed trees
+
+## Configuration
+
+### Environment Variables
+
+| Variable           | Description                                  | Required |
+| ------------------ | -------------------------------------------- | -------- |
+| `SENDGRID_API_KEY` | SendGrid API key for sending response emails | Yes      |
+
+### Worker Configuration
+
+The worker is configured in `wrangler.toml` with:
+
+- Runtime compatibility
+- Environment variables
+- Route patterns
+
+## Image Processing Pipeline
+
+1. **Email Parsing**: Extract attachments from SendGrid webhook payload
+2. **Image Loading**: Download and validate image attachments
+3. **GPS Extraction**: Parse EXIF data for latitude/longitude coordinates
+4. **Diameter Calculation**: Analyze image content for tree diameter measurements
+5. **Data Validation**: Ensure GPS coordinates and measurements are valid
+6. **Response Generation**: Send confirmation email with processing results
+
+## Error Handling
+
+The application handles various error scenarios:
+
+- **Invalid Images**: Non-image attachments are skipped
+- **Missing GPS Data**: Images without GPS coordinates are reported
+- **Network Failures**: Retry logic for image download failures
+- **Processing Errors**: Graceful handling of diameter calculation failures
+
+## Monitoring and Logging
+
+- All requests are logged with timestamps
+- Processing results and errors are logged for debugging
+- Health check endpoint for uptime monitoring
+- Error rates and processing metrics available in Cloudflare Analytics
+
 ## Technical Requirements
 
 1. Message Handling
 
-   - Support SMS message receipt with attached images
+   - Support email message receipt with attached images
    - Store messages when received for processing
    - Support offline message queuing on user's device
    - Process messages in order of receipt
-   - Send simple "Thank you for your submission" response
+   - Send simple confirmation response
 
 2. Image Processing
 
@@ -106,48 +348,6 @@ The system integrates with the Wild Trails Sawyer API which provides:
      - longitude (float)
      - PictureName (string)
 
-## Future Enhancements
-
-1. Message Validation
-
-   - Implement minimum image quality requirements
-   - Add rate limiting for submissions per phone number
-   - Validate supported trail areas/regions
-
-2. API Handling
-
-   - Implement exponential backoff for API retry attempts
-   - Add rate limiting for API submissions
-   - Enhanced error handling for API unavailability
-
-3. User Experience
-   - Include tree measurements in confirmation SMS
-   - Add submission tracking capabilities
-   - Support multiple images per submission
-
-## Technical Stack Recommendations
-
-1. SMS Processing:
-
-   - Twilio API for SMS handling and response
-   - Message queue system for reliable processing
-
-2. Image Processing:
-
-   - TensorFlow or PyTorch for AI image analysis
-   - ExifTool for GPS metadata extraction
-   - Custom ML model for tree diameter estimation
-
-3. Backend:
-
-   - Serverless architecture for scalability
-   - Queue-based message processing
-   - Retry mechanism for API submissions
-
-4. Storage:
-   - Secure blob storage for images
-   - Message queue for processing state
-
 ## Implementation Stack
 
 ### Core Infrastructure (Cloudflare)
@@ -159,30 +359,14 @@ The system integrates with the Wild Trails Sawyer API which provides:
    - Built-in TypeScript support
    - 100,000 requests/day free tier
 
-2. **Storage Layer**
-
-   - Cloudflare R2 for image storage
-     - S3-compatible API
-     - 10GB free storage
-     - No egress fees
-   - Cloudflare KV for metadata
-     - Low-latency key-value storage
-     - Perfect for storing submission states
-
-3. **Queue System**
-   - Cloudflare Queues
-     - Built-in support for FIFO queues
-     - 1 million operations free
-     - Message retention and retry capability
-
 ### External Services
 
-1. **SMS Integration**
+1. **Email Integration**
 
-   - Twilio
-     - SMS/MMS handling
-     - Webhook integration with Workers
-     - Pay-per-use pricing
+   - SendGrid
+     - Email/attachment handling
+     - Inbound Parse webhook integration with Workers
+     - Free tier available
 
 2. **AI/ML Processing**
    - TensorFlow.js
@@ -196,10 +380,8 @@ The system integrates with the Wild Trails Sawyer API which provides:
 
 1. **Webhook Handler**
 
-   - Receives Twilio SMS notifications
+   - Receives SendGrid email notifications
    - Validates incoming messages
-   - Stores images in R2
-   - Queues processing jobs
    - Sends acknowledgments
 
 2. **Image Processor**
@@ -235,18 +417,7 @@ The system integrates with the Wild Trails Sawyer API which provides:
 - VS Code with Dev Containers extension
 - Docker
 - A Cloudflare account
-- A Twilio account
-
-### Twilio Webhook Setup
-
-1. Log into your [Twilio Console](https://console.twilio.com)
-2. Navigate to Phone Numbers > Manage > Active Numbers
-3. Click on your number
-4. Under "Messaging" section:
-   - Set "When a message comes in" to "Webhook"
-   - Set the webhook URL to your Cloudflare Worker URL + "/sms"
-   - Example: `https://tree-spotter.mike-gehard.workers.dev/sms`
-   - Set the HTTP method to POST
+- A SendGrid account
 
 ### Environment Setup
 
@@ -255,7 +426,7 @@ The system integrates with the Wild Trails Sawyer API which provides:
 3. Fill in the environment variables:
    - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
    - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
-   - `TWILIO_AUTH_TOKEN`: Your Twilio auth token
+   - `SENDGRID_API_KEY`: Your SendGrid API key
 
 ### Development Container
 
@@ -297,34 +468,6 @@ Development dependencies:
 - `npm run type-check`: Run TypeScript type checking without compilation
 - `npm run type-check:watch`: Run type checking in watch mode for continuous feedback
 
-### Cloudflare Resources
-
-The project uses the following Cloudflare resources:
-
-1. R2 Bucket:
-
-   - Name: `tree-images`
-   - Binding: `TREE_IMAGES`
-   - Purpose: Stores uploaded tree images
-
-2. KV Namespace:
-   - Binding: `METADATA`
-   - Purpose: Stores submission metadata and processing state
-
-### Environment Variables
-
-Required environment variables:
-
-```bash
-# Cloudflare configuration
-CLOUDFLARE_API_TOKEN=     # Your Cloudflare API token
-CLOUDFLARE_ACCOUNT_ID=    # Your Cloudflare account ID
-
-# Twilio configuration
-TWILIO_AUTH_TOKEN=        # Your Twilio auth token
-TWILIO_ACCOUNT_SID=       # Your Twilio account SID
-```
-
 ### Testing
 
 Tests are written using Vitest and run in a Workers-like environment using `@cloudflare/vitest-pool-workers`. This ensures tests accurately reflect the production environment.
@@ -341,55 +484,81 @@ For watch mode during development:
 npm test -- --watch
 ```
 
-### Local Development
+## Contributing
 
-1. Install dependencies:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-   ```bash
-   npm install
-   ```
+## License
 
-2. Copy environment variables:
+[License information]
 
-   ```bash
-   cp .env.example .env
-   ```
+## Support
 
-3. Fill in the `.env` file with your credentials
+For issues and questions:
 
-4. Start the development server:
+- Check the [troubleshooting guide](#troubleshooting)
+- Review logs in Cloudflare Workers dashboard
+- Open an issue in the repository
 
-   ```bash
-   npm start
-   ```
+## Troubleshooting
 
-5. The server will be available at `http://localhost:8787`
+### Common Issues
 
-### Project Structure
+**Images not processing**:
 
-```
-tree-spotter/src/
-├── index.ts           # Main Cloudflare Worker entry point and SMS webhook handler
-├── types.ts           # Core type definitions (TwilioMessage, Tree, etc.)
-├── imageProcessing.ts # Railway-oriented processing pipeline
-└── twilio.ts          # Twilio webhook validation utilities
-```
+- Verify images contain GPS EXIF data
+- Check SendGrid webhook configuration
+- Review worker logs for errors
 
-#### Key Files
+**Missing GPS coordinates**:
 
-- **`types.ts`**: Defines the core data structures for transforming Twilio messages into tree data
-- **`imageProcessing.ts`**: Contains the Railway Oriented Programming pipeline with type-safe error handling
-- **`index.ts`**: Main application entry point that orchestrates the pipeline from form entries to processed trees
+- Ensure images were taken with location services enabled
+- Verify image format supports EXIF data
+- Check if GPS data was stripped during transfer
 
-### Important Notes
+**SendGrid webhook failures**:
 
-- The image processing pipeline uses Railway Oriented Programming for robust error handling
-- The project uses TypeScript strict mode for better type safety
-- All Cloudflare Workers features are configured in `wrangler.jsonc`
-- The service is designed to run at the edge using Cloudflare Workers
-- Development is done using the provided dev container which includes all necessary tools
-- Type checking is available via `npm run type-check` to ensure code quality
-- To grab Twilio images use:
-  ```
-  curl -u $TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN -o output_file.jpg -L -v <imageURL>
-  ```
+- DNS propagation can take up to 24 hours
+- Make sure your Cloudflare Worker route matches the webhook URL
+- Check SendGrid's activity log for delivery issues
+- Verify webhook URL is accessible from the internet
+
+**Email delivery issues**:
+
+- Confirm MX records are properly configured
+- Check spam folders if test emails aren't arriving
+- Verify the hostname in SendGrid matches your MX record
+- Test with different email providers (Gmail, Outlook, etc.)
+
+## Future Enhancements
+
+1. Message Validation
+
+   - Implement minimum image quality requirements
+   - Add rate limiting for submissions per email address
+   - Validate supported trail areas/regions
+
+2. API Handling
+
+   - Implement exponential backoff for API retry attempts
+   - Add rate limiting for API submissions
+   - Enhanced error handling for API unavailability
+
+3. User Experience
+   - Include tree measurements in confirmation email
+   - Add submission tracking capabilities
+   - Support multiple images per submission
+
+## Personas
+
+### Spotter
+
+As an avid person who explores trails in the woods
+
+I want to be able to take a picture of a downed tree, email it to a specific address and have it geolocated and sized. This helps sawyers know where trees are and how big of a saw to bring.
+
+So that I can help keep the trails clear and safe for everyone.

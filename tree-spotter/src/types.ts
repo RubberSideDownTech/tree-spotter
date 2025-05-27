@@ -3,20 +3,27 @@ export interface Env {
     TWILIO_ACCOUNT_SID: string;
 }
 
-export interface TwilioMessage {
+export interface SendGridMessage {
     from: string;
-    images: TwilioImage[];
+    subject: string;
+    images: SendGridImageAttachment[];
 }
 
-// lazy load the image contents
-export interface TwilioImage {
-    url: string;
-    contentType: string;
-    contents: Promise<Buffer>
+export interface SendGridAttachmentInfo {
+    filename: string;
+    type: string;
+    disposition: string;
 }
 
-export interface TwilioImageLoadError {
-    url: string; // the URL of the image that failed to load
+export interface SendGridImageAttachment {
+    filename: string;
+    type: string;
+    size: number;
+    data: File;
+}
+
+export interface SendGridImageLoadError {
+    filename: string;
     message: string;
 }
 
