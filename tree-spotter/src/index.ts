@@ -9,12 +9,36 @@ export default {
 
     if (url.pathname === '/email' && request.method === 'POST') {
       const formData = await request.formData();
+
+      // Debug: Log all form data keys to see what we're receiving
+      const allFormKeys = Array.from(formData.keys());
+      console.log('All form data keys:', allFormKeys);
+
+      // Debug: Log form data entries (be careful with large binary data)
+      const debugFormData: Record<string, any> = {};
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          debugFormData[key] = {
+            type: 'File',
+            name: value.name,
+            size: value.size,
+            contentType: value.type
+          };
+        } else {
+          debugFormData[key] = value;
+        }
+      }
+      console.log(`Form data (debug):`, debugFormData);
+
       const from = formData.get('from') as string;
       const subject = formData.get('subject') as string;
 
       console.log(`Email received from: ${from}, subject: ${subject}`);
 
       const attachmentCount = parseInt(formData.get('attachments') as string) || 0;
+
+      console.log(`Number of attachments: ${attachmentCount}`);
+
 
       if (attachmentCount === 0) {
         // TODO: send response indicating no attachments
@@ -32,9 +56,13 @@ export default {
 
       // Log results for debugging
       console.log(`Processed ${trees.length} trees successfully`);
-      if (errors.length > 0) {
-        console.warn(`${errors.length} image processing errors:`, errors);
-      }
+
+      console.log(`Encountered ${errors.length} errors during processing`);
+
+      // console.log each error
+      errors.forEach(error => {
+        console.log(`Image processing error for ${error.imageName}: ${error.message}`);
+      });
 
       // Submit trees to API (stubbed)
       try {

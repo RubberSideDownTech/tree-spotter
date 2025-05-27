@@ -11,8 +11,9 @@ export interface SendGridMessage {
 
 export interface SendGridAttachmentInfo {
     filename: string;
+    name: string;
     type: string;
-    disposition: string;
+    'content-id'?: string;
 }
 
 export interface SendGridImageAttachment {

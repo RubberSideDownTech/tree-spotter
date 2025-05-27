@@ -5,24 +5,54 @@ import { groupImagesIntoTrees } from "./treeGrouping";
 export function attachmentsFrom(count: number, formData: FormData): SendGridImageAttachment[] {
     const attachments: SendGridImageAttachment[] = [];
 
-    for (let i = 1; i <= count; i++) {
-        const attachmentInfo = formData.get(`attachment-info${i}`) as string;
-        const attachmentData = formData.get(`attachment${i}`) as File;
+    // Get the attachment-info which contains metadata for all attachments
+    const attachmentInfoRaw = formData.get('attachment-info') as string;
+    console.log('Raw attachment-info:', attachmentInfoRaw);
 
-        if (attachmentInfo && attachmentData) {
-            const info: SendGridAttachmentInfo = JSON.parse(attachmentInfo);
+    if (!attachmentInfoRaw) {
+        console.log('No attachment-info found in form data');
+        return attachments;
+    }
 
-            // Check if it's an image
-            if (info.type && info.type.startsWith('image/')) {
-                attachments.push({
-                    filename: info.filename,
-                    type: info.type,
-                    size: attachmentData.size,
-                    data: attachmentData
-                });
+    let attachmentInfoMap: Record<string, SendGridAttachmentInfo>;
+    try {
+        attachmentInfoMap = JSON.parse(attachmentInfoRaw);
+        console.log('Parsed attachment-info:', attachmentInfoMap);
+    } catch (error) {
+        console.error('Failed to parse attachment-info JSON:', error);
+        return attachments;
+    }
 
-                console.log(`Image attachment found: ${info.filename}, type: ${info.type}`);
-            }
+    // Process each attachment based on the info map
+    for (const [attachmentKey, info] of Object.entries(attachmentInfoMap)) {
+        console.log(`Processing attachment key: ${attachmentKey}`, info);
+
+        // Get the actual attachment data using the key
+        const attachmentData = formData.get(attachmentKey) as File;
+
+        if (!attachmentData) {
+            console.log(`No attachment data found for key: ${attachmentKey}`);
+            continue;
+        }
+
+        console.log(`Found attachment data for ${attachmentKey}:`, {
+            name: attachmentData.name,
+            size: attachmentData.size,
+            type: attachmentData.type
+        });
+
+        // Check if it's an image
+        if (info.type && info.type.startsWith('image/')) {
+            attachments.push({
+                filename: info.filename,
+                type: info.type,
+                size: attachmentData.size,
+                data: attachmentData
+            });
+
+            console.log(`Image attachment added: ${info.filename}, type: ${info.type}, size: ${attachmentData.size}`);
+        } else {
+            console.log(`Skipping non-image attachment: ${info.filename}, type: ${info.type}`);
         }
     }
 
@@ -42,6 +72,7 @@ export async function processToTrees(message: SendGridMessage): Promise<{ trees:
 
             // Extract GPS coordinates
             const gpsResult = extractGpsFromImage(buffer, attachment.filename);
+            console.log(`gpsResult: ${JSON.stringify(gpsResult)}`);
             if (!gpsResult.success) {
                 errors.push(gpsResult.error);
                 continue;
@@ -49,6 +80,7 @@ export async function processToTrees(message: SendGridMessage): Promise<{ trees:
 
             // Calculate diameter
             const diameterResult = await calculateDiameter(buffer, attachment.filename);
+            console.log(`diameterResult: ${JSON.stringify(diameterResult)}`);
             if (!diameterResult.success) {
                 errors.push(diameterResult.error);
                 continue;
