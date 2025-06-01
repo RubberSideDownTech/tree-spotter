@@ -59,7 +59,7 @@ export function attachmentsFrom(count: number, formData: FormData): SendGridImag
     return attachments;
 }
 
-export async function processToTrees(message: SendGridMessage): Promise<{ trees: Tree[], errors: ImageProcessingError[] }> {
+export async function processToTrees(message: SendGridMessage, env: any): Promise<{ trees: Tree[], errors: ImageProcessingError[] }> {
     const errors: ImageProcessingError[] = [];
     const processedImages: TreeImage[] = [];
 
@@ -78,8 +78,8 @@ export async function processToTrees(message: SendGridMessage): Promise<{ trees:
                 continue;
             }
 
-            // Calculate diameter
-            const diameterResult = await calculateDiameter(buffer, attachment.filename);
+            // Calculate diameter using AI with email content
+            const diameterResult = await calculateDiameter(message.subject, message.body, env);
             console.log(`diameterResult: ${JSON.stringify(diameterResult)}`);
             if (!diameterResult.success) {
                 errors.push(diameterResult.error);

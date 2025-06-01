@@ -1,12 +1,13 @@
 export interface Env {
-    TWILIO_AUTH_TOKEN: string;
-    TWILIO_ACCOUNT_SID: string;
+    SENDGRID_API_KEY: string;
+    AI: Ai;
 }
 
 export interface SendGridMessage {
     from: string;
     subject: string;
     images: SendGridImageAttachment[];
+    body: string;
 }
 
 export interface SendGridAttachmentInfo {

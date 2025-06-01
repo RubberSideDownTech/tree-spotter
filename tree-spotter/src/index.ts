@@ -6,15 +6,12 @@ export default {
     const url = new URL(request.url);
     console.log(`[${new Date().toISOString()}] Incoming request to ${url.pathname}`);
 
-
     if (url.pathname === '/email' && request.method === 'POST') {
       const formData = await request.formData();
 
-      // Debug: Log all form data keys to see what we're receiving
       const allFormKeys = Array.from(formData.keys());
       console.log('All form data keys:', allFormKeys);
 
-      // Debug: Log form data entries (be careful with large binary data)
       const debugFormData: Record<string, any> = {};
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
@@ -32,6 +29,7 @@ export default {
 
       const from = formData.get('from') as string;
       const subject = formData.get('subject') as string;
+      const body = formData.get('body') as string;
 
       console.log(`Email received from: ${from}, subject: ${subject}`);
 
@@ -48,11 +46,12 @@ export default {
       const message = {
         from,
         subject,
+        body,
         images: attachmentsFrom(attachmentCount, formData)
       };
 
       // Process form entries through the pipeline
-      const { trees, errors } = await processToTrees(message);
+      const { trees, errors } = await processToTrees(message, env);
 
       // Log results for debugging
       console.log(`Processed ${trees.length} trees successfully`);
@@ -61,7 +60,8 @@ export default {
 
       // console.log each error
       errors.forEach(error => {
-        console.log(`Image processing error for ${error.imageName}: ${error.message}`);
+        const errorName = error.type === 'gps_extraction' ? error.imageName : 'email_content';
+        console.log(`Image processing error for ${errorName}: ${error.message}`);
       });
 
       // Submit trees to API (stubbed)

@@ -16,7 +16,10 @@
 	},
 	"vars": {
 		"SENDGRID_API_KEY": "",  // Will be overridden by secret
-	}
+	},
+	"ai": {
+		"binding": "AI"
+	},
 
 	/**
 	 * Smart Placement

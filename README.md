@@ -7,7 +7,12 @@ A Cloudflare Worker application that processes tree images with GPS coordinates 
 Tree Spotter allows users to submit tree images by sending them via email. The application processes these images to extract:
 
 - GPS coordinates from EXIF data
+  - If you take the picture using the GMail app, it does not include the GPS data.
+  - If you take the picture, with location services on for camera, and attach in GMail app it works.
+  - If you take the picture, with location services on for camera, and send from picture using GMail it works.
 - Tree diameter measurements
+  - Could not find AI solution.
+  - Have folks put diameter in either subject or body. Use AI to extract that information.
 - Image metadata for analysis
 
 **Note**: Email delivery preserves the original image metadata, ensuring accurate GPS coordinate extraction from EXIF data.
