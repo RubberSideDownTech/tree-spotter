@@ -98,12 +98,12 @@ describe('calculateDiameter', () => {
         const emailBody = bodyMatch ? bodyMatch[1].trim() : '';
         
         // Mock AI responses based on email body content
-        if (emailBody.includes('Tree diameter is 30cm')) {
-          return { response: '30' };
-        } else if (emailBody.includes('DBH: 25 centimeters')) {
-          return { response: '25' };
-        } else if (emailBody.includes('Circumference 94.2cm')) {
-          return { response: '30' }; // 94.2 / π ≈ 30
+        if (emailBody.includes('Tree diameter is 12 inches')) {
+          return { response: '12' };
+        } else if (emailBody.includes('DBH: 10 inches')) {
+          return { response: '10' };
+        } else if (emailBody.includes('Circumference 37.7 inches')) {
+          return { response: '12' }; // 37.7 / π ≈ 12
         } else if (emailBody.includes('No measurements provided')) {
           return { response: 'NOT_FOUND' };
         } else if (emailBody.includes('Invalid response')) {
@@ -118,39 +118,39 @@ describe('calculateDiameter', () => {
   it('should extract explicit diameter measurements', async () => {
     const result = await calculateDiameter(
       'Tree measurement',
-      'Tree diameter is 30cm',
+      'Tree diameter is 12 inches',
       mockEnv
     );
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toBe(30);
+      expect(result.data).toBe(12);
     }
   });
 
   it('should extract DBH measurements', async () => {
     const result = await calculateDiameter(
       'Tree survey',
-      'DBH: 25 centimeters',
+      'DBH: 10 inches',
       mockEnv
     );
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toBe(25);
+      expect(result.data).toBe(10);
     }
   });
 
   it('should convert circumference to diameter', async () => {
     const result = await calculateDiameter(
       'Tree measurements',
-      'Circumference 94.2cm',
+      'Circumference 37.7 inches',
       mockEnv
     );
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toBe(30);
+      expect(result.data).toBe(12);
     }
   });
 
@@ -185,7 +185,7 @@ describe('calculateDiameter', () => {
   it('should validate diameter range', async () => {
     const mockEnvWithLargeValue = {
       AI: {
-        run: async () => ({ response: '2000' }) // Value outside valid range
+        run: async () => ({ response: '500' }) // Value outside valid range (400 inches max)
       }
     };
 

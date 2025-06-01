@@ -126,20 +126,25 @@ You are analyzing an email about tree measurements. Extract the diameter measure
 Email Subject: ${subject}
 Email Body: ${body}
 
-Please extract the diameter measurement in centimeters. Look for:
-- Explicit diameter measurements (e.g., "30cm diameter", "diameter: 25cm")
+Please extract the diameter measurement in inches. Look for:
+- Explicit diameter measurements (e.g., "12 inch diameter", "diameter: 10 inches", "30cm diameter")
 - DBH (Diameter at Breast Height) measurements
 - Circumference measurements that can be converted to diameter
 - Any numerical values followed by units that could indicate tree diameter
 
-If you find a circumference measurement, convert it to diameter using the formula: diameter = circumference / π
+If you find measurements in other units, convert them to inches:
+- Centimeters to inches: divide by 2.54
+- Feet to inches: multiply by 12
+- If you find a circumference measurement, convert it to diameter using: diameter = circumference / π
 
-Return only the numeric value in centimeters as a number. If no diameter information is found, return "NOT_FOUND".
+Return only the numeric value in inches as a number. If no diameter information is found, return "NOT_FOUND".
 
 Examples:
-- "Tree diameter is 30cm" → 30
-- "DBH: 25 centimeters" → 25
-- "Circumference 94.2cm" → 30
+- "Tree diameter is 12 inches" → 12
+- "DBH: 10 inches" → 10
+- "diameter: 30cm" → 11.8 (30 ÷ 2.54)
+- "Circumference 37.7 inches" → 12 (37.7 ÷ π)
+- "2 foot diameter" → 24 (2 × 12)
 - "No measurements provided" → NOT_FOUND
 `;
 
@@ -181,15 +186,15 @@ Examples:
       });
     }
 
-    // Validate reasonable diameter range (1cm to 1000cm)
-    if (diameterValue < 1 || diameterValue > 1000) {
+    // Validate reasonable diameter range (0.5 inches to 400 inches)
+    if (diameterValue < 0.5 || diameterValue > 400) {
       return failure({
         type: 'diameter_calculation',
-        message: `Diameter value ${diameterValue}cm is outside reasonable range (1-1000cm)`
+        message: `Diameter value ${diameterValue} inches is outside reasonable range (0.5-400 inches)`
       });
     }
 
-    console.log(`Successfully extracted diameter from email: ${diameterValue}cm`);
+    console.log(`Successfully extracted diameter from email: ${diameterValue} inches`);
     return success(diameterValue);
 
   } catch (error) {
